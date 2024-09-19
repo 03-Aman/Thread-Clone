@@ -3,15 +3,59 @@ import { Button, CloseButton, Flex, FormControl, Image, Input, Modal, ModalBody,
 import { useRef, useState } from 'react'
 import { BsFillImageFill } from "react-icons/bs";
 import usePreviewImg from '../hooks/usePreviewImg'
+import { useRecoilValue } from "recoil";
+import userAtom from "../atoms/userAtom.js";
+import useShowToast from '../hooks/useShowToast.js';
+
+const MAX_CHAR = 500
 
 const CreatePost = () => {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const [postText, setPostText] = useState('')
     const { handleImageChange, imgUrl, setImgUrl } = usePreviewImg();
     const imageRef = useRef(null)
+    const [remainingChar, setRemainingChar] = useState(MAX_CHAR)
+    const user = useRecoilValue(userAtom);
+    const showToast = useShowToast();
+    const [loading, setLoading] = useState(false);
 
-    const handleTextChange = () => { }
-    const handleCreatePost = () => { }
+    const handleTextChange = (e) => {
+        const inputText = e.target.value;
+
+        if (inputText.length > MAX_CHAR) {
+            const truncatedText = inputText.slice(0, MAX_CHAR);
+            setPostText(truncatedText);
+            setRemainingChar(0);
+        } else {
+            setPostText(inputText);
+            setRemainingChar(MAX_CHAR - inputText.length);
+        }
+    }
+    const handleCreatePost = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/posts/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ postedBy: user._id, text: postText, img: imgUrl })
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                showToast("Error", data.error, "error");
+                return;
+            }
+            showToast("Success", data.message, "success");
+            onClose();
+            setPostText("");
+        } catch (error) {
+            showToast("Error", error, "error");
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <>
             <Button
@@ -43,7 +87,7 @@ const CreatePost = () => {
                                 m={"1"}
                                 color={"gray.800"}
                             >
-                                500/500
+                                {remainingChar}/{MAX_CHAR}
                             </Text>
                             <Input
                                 type='file'
@@ -73,7 +117,7 @@ const CreatePost = () => {
                     </ModalBody >
 
                     <ModalFooter>
-                        <Button colorScheme='blue' mr={3} onClick={handleCreatePost}>
+                        <Button colorScheme='blue' mr={3} onClick={handleCreatePost}  isLoading={loading}>
                             Post
                         </Button>
                     </ModalFooter>
