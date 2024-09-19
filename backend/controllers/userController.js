@@ -2,7 +2,7 @@ import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/helpers/generateTokenAndSetCookie.js";
 import { v2 as cloudinary } from "cloudinary";
-import { mongo } from "mongoose";
+import { mongoose } from "mongoose";
 
 
 const signupUser = async (req, res) => {
@@ -187,7 +187,7 @@ const getUserProfile = async (req, res) => {
         return res.status(200).json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
-        log("Error in getUserProfile: ", err.message);
+        console.log("Error in getUserProfile: ", err.message);
     }
 
 }
