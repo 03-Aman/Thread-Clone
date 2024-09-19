@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/helpers/generateTokenAndSetCookie.js";
 import { v2 as cloudinary } from "cloudinary";
+import { mongo } from "mongoose";
 
 
 const signupUser = async (req, res) => {
@@ -47,32 +48,32 @@ const signupUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-	try {
-		const { username, password } = req.body;
-		const user = await User.findOne({ username });
-		const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+        const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
 
-		if (!user || !isPasswordCorrect) return res.status(400).json({ error: "Invalid username or password" });
+        if (!user || !isPasswordCorrect) return res.status(400).json({ error: "Invalid username or password" });
 
-		if (user.isFrozen) {
-			user.isFrozen = false;
-			await user.save();
-		}
+        if (user.isFrozen) {
+            user.isFrozen = false;
+            await user.save();
+        }
 
-		generateTokenAndSetCookie(user._id, res);
+        generateTokenAndSetCookie(user._id, res);
 
-		res.status(200).json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-			username: user.username,
-			bio: user.bio,
-			profilePic: user.profilePic,
-		});
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-		console.log("Error in loginUser: ", error.message);
-	}
+        res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            username: user.username,
+            bio: user.bio,
+            profilePic: user.profilePic,
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.log("Error in loginUser: ", error.message);
+    }
 };
 
 
@@ -166,14 +167,24 @@ const updateUser = async (req, res) => {
 }
 
 const getUserProfile = async (req, res) => {
-    const { username } = req.params;
+    // we fill fetch user profile either with username or id
+    // query is either username or id
+    const { query } = req.params;
     try {
-        const user = await User.findOne({ username }).select("-password").select("-updatedAt");
+        let user;
+
+        // check if query is an id
+        if (mongoose.Types.ObjectId.isValid(query)) {
+            user = await User.findOne({ _id: query }).select("-password").select("-updatedAt");
+        } else {
+            // check if query is a username
+            user = await User.findOne({ username: query }).select("-password").select("-updatedAt");
+        }
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        return res.status(200).json({ user });
+        return res.status(200).json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
         log("Error in getUserProfile: ", err.message);

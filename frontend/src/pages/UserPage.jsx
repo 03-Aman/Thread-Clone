@@ -46,7 +46,7 @@ const UserPage = () => {
   if (!user && !loading) return <h1>User not found</h1>;
 
   return (<>
-    <UserHeader user={user.user} />
+    <UserHeader user={user} />
     <UserPost likes={1200} replies={881} postImg="/post1.png" postTitle="Let's talk about threads." />
     <UserPost likes={1500} replies={4851} postImg="/post2.jpg" postTitle="Nice catchup." />
     <UserPost likes={1520} replies={581} postImg="/post3.png" postTitle="Amazing guy." />
