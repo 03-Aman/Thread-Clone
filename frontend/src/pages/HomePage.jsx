@@ -16,7 +16,7 @@ const HomePage = () => {
         if (data.error) {
           showToast("Error", data.error, "error");
         }
-        console.log(data);
+        // console.log(data);
         setPosts(data);
 
       } catch (error) {
