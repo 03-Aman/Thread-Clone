@@ -3,9 +3,11 @@ import { Button, CloseButton, Flex, FormControl, Image, Input, Modal, ModalBody,
 import { useRef, useState } from 'react'
 import { BsFillImageFill } from "react-icons/bs";
 import usePreviewImg from '../hooks/usePreviewImg'
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import userAtom from "../atoms/userAtom.js";
 import useShowToast from '../hooks/useShowToast.js';
+import postsAtom from '../atoms/postsAtom.js';
+import { useParams } from 'react-router-dom';
 
 const MAX_CHAR = 500
 
@@ -18,6 +20,8 @@ const CreatePost = () => {
     const user = useRecoilValue(userAtom);
     const showToast = useShowToast();
     const [loading, setLoading] = useState(false);
+    const [posts, setPosts] = useRecoilState(postsAtom);
+    const { username } = useParams();
 
     const handleTextChange = (e) => {
         const inputText = e.target.value;
@@ -48,6 +52,9 @@ const CreatePost = () => {
                 return;
             }
             showToast("Success", data.message, "success");
+            if (username === user.username) {
+                setPosts([data, ...posts]);
+            }
             onClose();
             setPostText("");
         } catch (error) {
@@ -61,12 +68,12 @@ const CreatePost = () => {
             <Button
                 position={"fixed"}
                 bottom={10}
-                right={10}
-                leftIcon={<AddIcon />}
+                right={5}
                 bg={useColorModeValue("gray.300", "gray.dark")}
                 onClick={onOpen}
+                size={{ base: "sm", sm: "md" }}
             >
-                Post
+                <AddIcon />
             </Button>
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalOverlay />
@@ -117,7 +124,7 @@ const CreatePost = () => {
                     </ModalBody >
 
                     <ModalFooter>
-                        <Button colorScheme='blue' mr={3} onClick={handleCreatePost}  isLoading={loading}>
+                        <Button colorScheme='blue' mr={3} onClick={handleCreatePost} isLoading={loading}>
                             Post
                         </Button>
                     </ModalFooter>
